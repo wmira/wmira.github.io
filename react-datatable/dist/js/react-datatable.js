@@ -54,15 +54,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
 	"use strict";
 
-	var DataSource = __webpack_require__(2);
+	var RDT = __webpack_require__(3)(__webpack_require__(1),__webpack_require__(2));
 
-	var RDT = __webpack_require__(4)(__webpack_require__(1),__webpack_require__(3));
-	RDT.datasource = function(data,mapper) {
-	    return new DataSource(data,mapper);
-	}
 
+	/**
+	 * Helpers
+	 *  
+	 * @type {{classname: Function}}
+	 */
+	var Decorator = {
+	    
+	    styles : function(clsname,style,cellClassname,cellStyle) {
+	        return function() {
+	            return {
+	                className : clsname,
+	                style : style,
+	                cellClassName: cellClassname,
+	                cellStyle : cellStyle
+	            };
+	        };
+	    }
+	    
+	};
 
 	module.exports = RDT;
 
@@ -81,151 +98,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* jshint -W097, esnext: true */
 	"use strict";
 
-	var EventEmitter = __webpack_require__(11).EventEmitter;
-	var utils = __webpack_require__(10);
-
-
-	var EVENTS = {
-	    RECORD_UPDATED : "RECORD_UPDATED",
-	    RECORD_ADDED : "RECORD_ADDED",
-	    RECORDS_SORTED : "RECORDS_SORTED"
-	};
-
-
-	/**
-	 * Create a new datasource using records array as a backing dataset
-	 * 
-	 * @param records
-	 * @constructor
-	 */
-	var DataSource = function(records,config) {
-	    this.id = new Date();
-
-	    if ( records instanceof Array ) {
-	        this.records = records;
-	    } else {
-	        var dataField = records.data;
-	        var data = records.datasource;
-	        this.records =  data[dataField];
-	    }
-	    this.config = config;
-	    if ( config ) {
-	        this.propertyConfigMap = {};
-	        this.config.cols.forEach( function(col)  {
-	            this.propertyConfigMap[col.property] = col;
-	        }.bind(this));
-	    }
-	};
-
-
-	DataSource.prototype = EventEmitter.prototype;
-	DataSource.prototype.constructor = DataSource;
-
-	/**
-	 * Access the record at the given index
-	 *
-	 * @param index
-	 * @returns record
-	 */
-	DataSource.prototype.record = function(index) {
-	    return this.records[index];
-	};
-
-
-	/**
-	 * Append a record
-	 *  
-	 * @param record
-	 */
-	DataSource.prototype.append = function(record) {
-	    this.records.push(record);
-	    this.emit(EVENTS.RECORD_ADDED,record);
-	};
-
-
-	DataSource.prototype.length = function() {
-	    return this.records.length;
-	};
-
-	/**
-	 * FIXME: Still broken, we need to be able to sort depending on type
-	 *
-	 * @param property
-	 * @param direction
-	 */
-	DataSource.prototype.sort = function(property,direction) {
-	    
-	    this.records.sort(  function( o1,o2)   {
-	        var reverseDir = 1;
-	        if ( direction === "-1" ) {
-	             reverseDir = -1;
-	        }
-	        var col = this.propertyConfigMap[property];
-	        
-	        var v1 = utils.extractValue(property,col.path,o1);
-	        var v2 = utils.extractValue(property,col.path,o2);
-	        
-	         
-	        var type = utils.extractSortableType(v1,v2);
-	        return utils.compare(type,v1,v2,reverseDir);
-	        
-	    }.bind(this));
-	    
-	    this.emit(EVENTS.RECORDS_SORTED, { property: property, direction : direction});
-
-
-	};
-
-	/**
-	 * Maps the actual page
-	 * The mapper function gets the record, currentIndex and actual index
-	 */
-	DataSource.prototype.map = function(pageState,mapper) {
-	    if ( !pageState ) {
-	        return this.records.map(mapper);
-	    }
-
-	    var result = [];
-	    var counter = 0;
-
-	    for ( var i = pageState.startIdx; i < pageState.endIdx; i++ ) {
-
-	        result.push(mapper(this.records[i],counter++,i));
-	    }
-
-	    return result;
-	};
-
-	/**
-	 * Up
-	 *
-	 *
-	 * @param recordIdx
-	 * @param newValue
-	 */
-	DataSource.prototype.updateRecord = function(recordIdx,property,newValue) {
-
-	    var record = this.records[recordIdx];
-	    utils.updateRecord(property,newValue,this.propertyConfigMap[property],record);
-	    //FIXME, we should get current value and pass as old value
-	    this.emit(EVENTS.RECORD_UPDATED,record,recordIdx,property,newValue);
-	};
-
-
-	module.exports = DataSource;
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */
-	/*globals require,module */
-	/* jshint -W097, esnext: true */
-	"use strict";
-
 	var React = __webpack_require__(1);
 
-	var DataSource = __webpack_require__(2);
+	var DataSource = __webpack_require__(4);
 	var Pager = __webpack_require__(5);
 
 	var RDTRow = __webpack_require__(6);
@@ -285,12 +160,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.setState(this._createStateFromProps(nextProps));
 	    },
 	    nextPage : function() {
-	        if ( this.pager ) {
-	            this.pager = this.pager.next();
-	            this.setState({ pager : this.pager.state() });
+	        if ( this.state.pager ) {
+	           // this.pager = this.pager.next();
+	            this.setState({ pager : this.state.pager.next() });
 	        }
 	    },
 
+	    /* REMOVING FOR NOW
 	    add : function(record) {
 	        this.ds.add(record);
 	        var pagerState = null;
@@ -300,7 +176,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        this.setState({ pager : pagerState });
 	    },
-
+	    */
 	    onDsChangeEvent : function() {
 	        if ( this.props.onChange ) {
 	            this.props.onChange();
@@ -309,19 +185,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    
 	    _createStateFromProps : function(props) {
 
-	        var datasource = null;
-	        var pager =  null;
+	        var state = {};
+	        
 	        if ( props.data  ) {
-	            datasource = new DataSource(props.data,props.config);
-
+	            state.datasource = new DataSource(props.data,props.config);
 	        }
 	        
+	        
 	        if (props.config.pager  ) {
-	            if (props.config.pager) {
-	                pager = new Pager(1, props.config.pager.rowsPerPage, datasource);
-	            }
+	            state.pager = new Pager(1, props.config.pager.rowsPerPage, state.datasource);
 	        }
-	        return { datasource: datasource,pager :pager };
+
+	        return  state; //{ datasource: datasource, pager : this.state.pager, pagerState: this.pager.state() };
 	    },
 
 	    /**
@@ -334,9 +209,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    pagerUpdated : function(page) {
-	        if ( this.pager ) {
-	            this.pager = this.pager.toPage(page);
-	            this.setState({ pager : this.pager.state() });
+	        if ( this.state.pager ) {
+	           // this.pager = this.pager.toPage(page);
+	            this.setState({ pager : this.state.pager.toPage(page) });
 	        }
 	    },
 
@@ -345,15 +220,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var tableStyle = TABLE_CSS[this.props.config.style];
 	        var config = this.props.config;
 	        var datasource = this.state.datasource;
-
+	        var pagerState = null;
 	        var paginator = null;
 	        /*jshint ignore:start */
 	        if ( this.state.pager ) {
-
-	            paginator =  React.createElement(Paginator, {datasource: datasource, config: this.props.config, pageChangedListener: this.pagerUpdated}) ;
+	            paginator =  React.createElement(Paginator, {pagerState: this.state.pager.state(), datasource: datasource, config: this.props.config, pageChangedListener: this.pagerUpdated})
 
 	        }
-
 	        return (
 	            React.createElement("div", {onClick: this.onClick}, 
 	                React.createElement("div", {className: "rdt-container", ref: "container"}, 
@@ -376,7 +249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*globals require,module,React */
@@ -450,11 +323,184 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
+	"use strict";
+
+	var EventEmitter = __webpack_require__(12).EventEmitter;
+	var utils = __webpack_require__(10);
+
+
+	var EVENTS = {
+	    RECORD_UPDATED : "RECORD_UPDATED",
+	    RECORD_ADDED : "RECORD_ADDED",
+	    RECORDS_SORTED : "RECORDS_SORTED"
+	};
+
+
+	var indexRecords = function() {
+	    
+	    var colsMap = this.propertyConfigMap;
+	    var records = this.records;
+	    var i;
+	    
+	    var indexdb = {};
+	    
+	    for ( i=0; i < records.length; i++ ) {
+	        var record= records[i];
+	        Object.keys(colsMap).forEach( function(key)  {
+	            var col = colsMap[key];
+	            var property = col.property;
+	            var index = indexdb[property] || ( indexdb[property] ={} );
+	            
+	            var value = utils.extractValue(property,col.path,record);
+	            var arr = index[value] || ( index[value] = []);
+	            arr.push(i);
+	        });
+	    }
+	    
+	    //console.log(indexdb);
+	    
+	};
+
+	/**
+	 * Create a new datasource using records array as a backing dataset
+	 * 
+	 * @param records
+	 * @constructor
+	 */
+	var DataSource = function(records,config) {
+	    
+	    //the hell is this doing here
+	    this.id = new Date();
+
+	    if ( records instanceof Array ) {
+	        this.records = records;
+	    } else {
+	        var dataField = records.data;
+	        var data = records.datasource;
+	        this.records =  data[dataField];
+	    }
+	    this.config = config;
+	    if ( this.config ) {
+	        this.propertyConfigMap = {};
+	        this.config.cols.forEach( function(col)  {
+	            this.propertyConfigMap[col.property] = col;
+	        }.bind(this));
+	    }
+
+	    //indexRecords.call(this);
+	};
+
+
+	DataSource.prototype = EventEmitter.prototype;
+	DataSource.prototype.constructor = DataSource;
+
+	/**
+	 * Access the record at the given index
+	 *
+	 * @param index
+	 * @returns record
+	 */
+	DataSource.prototype.record = function(index) {
+	    return this.records[index];
+	};
+
+
+	/**
+	 * Append a record
+	 *  
+	 * @param record
+	 */
+	DataSource.prototype.append = function(record) {
+	    this.records.push(record);
+	    this.emit(EVENTS.RECORD_ADDED,record);
+	};
+
+
+	DataSource.prototype.length = function() {
+	    return this.records.length;
+	};
+
+	/**
+	 * FIXME: Still broken, we need to be able to sort depending on type
+	 *
+	 * @param property
+	 * @param direction
+	 */
+	DataSource.prototype.sort = function(property,direction) {
+	    
+	    this.records.sort(  function( o1,o2)   {
+	        var reverseDir = 1;
+	        if ( direction === "-1" ) {
+	             reverseDir = -1;
+	        }
+	        var col = this.propertyConfigMap[property];
+	        
+	        var v1 = utils.extractValue(property,col.path,o1);
+	        var v2 = utils.extractValue(property,col.path,o2);
+	        
+	         
+	        var type = utils.extractSortableType(v1,v2);
+	        return utils.compare(type,v1,v2,reverseDir);
+	        
+	    }.bind(this));
+	    
+	    this.emit(EVENTS.RECORDS_SORTED, { property: property, direction : direction});
+
+
+	};
+
+	/**
+	 * Maps the actual page
+	 * The mapper function gets the record, currentIndex and actual index
+	 */
+	DataSource.prototype.map = function(pageState,mapper) {
+	    if ( !pageState ) {
+	        return this.records.map(mapper);
+	    }
+
+	    var result = [];
+	    var counter = 0;
+	    console.log(pageState.endIdx);
+	    for ( var i = pageState.startIdx; i < pageState.endIdx; i++ ) {
+
+	        result.push(mapper(this.records[i],counter++,i));
+	    }
+
+	    return result;
+	};
+
+	/**
+	 * Up
+	 *
+	 *
+	 * @param recordIdx
+	 * @param newValue
+	 */
+	DataSource.prototype.updateRecord = function(recordIdx,property,newValue) {
+
+	    var record = this.records[recordIdx];
+	    utils.updateRecord(property,newValue,this.propertyConfigMap[property],record);
+	    //FIXME, we should get current value and pass as old value
+	    this.emit(EVENTS.RECORD_UPDATED,record,recordIdx,property,newValue);
+	};
+
+
+	module.exports = DataSource;
+
+/***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	'use strict';
+	/** @jsx React.DOM */
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
+	"use strict";
 
 	/**
 	 *
@@ -512,13 +558,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	Pager.prototype.state = function() {
 	    return {
-	        page : this.page + 1,
+	        page : this.page,
 	        startIdx : this.startIdx,
 	        endIdx : this.endIdx,
-	        rowsPerPage: this.rowsPerPage
-	    }
+	        rowsPerPage: this.rowsPerPage,
+	        totalRecords : this.datasource.records.length,
+	        totalPage : this.maxPage()
+	    };
 	};
-
 
 
 	module.exports = Pager;
@@ -534,7 +581,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    
 	var React = __webpack_require__(1);
 
-	var RDTCell = __webpack_require__(12);
+	var RDTCell = __webpack_require__(11);
 
 	/**
 	 * React Component as a row
@@ -592,20 +639,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	var DIRECTION_UP = "1";
 	var DIRECTION_DOWN = "-1";
 
+
+
+
 	var SortControl = React.createClass({displayName: "SortControl",
 	   
 
 	    
 	    render : function() {
 
-	        var arrowUp = (  this.props.isSortedColumn && this.props.direction == DIRECTION_UP ) ?
+	        var arrowUp = (  this.props.isSortedColumn && this.props.direction === DIRECTION_UP ) ?
 	            "rdt-arrow-up-active" : "rdt-arrow-up-inactive";
-	        var arrowDown = ( this.props.isSortedColumn &&  this.props.direction == DIRECTION_DOWN ) ?
+	        var arrowDown = ( this.props.isSortedColumn &&  this.props.direction === DIRECTION_DOWN ) ?
 	            "rdt-arrow-down-active" : "rdt-arrow-down-inactive";
-
+	        /*jshint ignore:start */
 	        return (React.createElement("div", {style:  { float: "right"} }, React.createElement("div", {
 	            "data-rdt-action": "sort", "data-col-property": this.props.col.property, "data-sort-direction": DIRECTION_UP, className: "rdt-arrow-up " + arrowUp}), React.createElement("div", {style: {"marginBottom": "5px"}}), 
 	                React.createElement("div", {"data-rdt-action": "sort", "data-col-property": this.props.col.property, "data-sort-direction": DIRECTION_DOWN, className: "rdt-arrow-down " + arrowDown})))
+	        /*jshint ignore:end */
 	    } 
 	    
 	});
@@ -623,7 +674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    getInitialState : function() {
 	        var datasource =this.props.datasource;
 	        datasource.on("RECORDS_SORTED",this.recordsSorted);
-	        return { datasource : this.props.datasource };
+	        return { datasource : this.props.datasource, showFilter: false };
 	    },
 	    componentWillReceiveProps: function(nextProps) {
 	        if ( nextProps.datasource ) {
@@ -671,6 +722,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
+	"use strict";
+
 	var React = __webpack_require__(1);
 	var RDTRow = __webpack_require__(6);
 
@@ -679,10 +734,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *
 	 */
 	var RDTBody = React.createClass({displayName: "RDTBody",
-
+	    
+	    handleRecordUpdate : function(record,recordIdx,property,newValue) {
+	        this.refs[recordIdx].forceUpdate();
+	    },
+	    
+	    componentDidMount : function() {
+	        this.props.datasource.on("RECORD_UPDATED",this.handleRecordUpdate);
+	    },
 
 	    render: function() {
-
+	        /*jshint ignore:start */
 	        return(
 	            React.createElement("tbody", null, 
 	                
@@ -695,11 +757,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        if (realIdx && !Array.isArray(realIdx)) {
 	                            id = realIdx;
 	                        }
-	                        return React.createElement(RDTRow, {datasource: this.props.datasource, index: id, key: id, record: data, config: this.props.config})
+	                        return React.createElement(RDTRow, {ref: id, datasource: this.props.datasource, index: id, key: id, record: data, config: this.props.config})
 	                    }.bind(this))
 	                
 	            )
 	        )
+	        /*jshint ignore:end */
 
 	    }
 	});
@@ -712,6 +775,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
+	"use strict";
+
 	var React = __webpack_require__(1);
 
 
@@ -721,20 +788,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var Paginator = React.createClass({displayName: "Paginator",
 
-	    getInitialState: function() {
-	        return { page: this.props.page };
-	    },
 
-	    componentWillReceiveProps: function(props) {
-	        this.setState({ page : props.page });
-	    },
+	    
+	    pagerClickListener : function(e) {
+	        var target = e.target;
+	        var page = target.getAttribute("data-page");
 
-	    pageSelectionHandler : function() {
-	        if ( this.props.pageChangedListener ) {
-	            this.props.pageChangedListener(this.refs.pageSelection.getDOMNode().value);
+	        if ( page ) {
+	            page = parseInt(page);
+	            this.props.pageChangedListener(page);
 	        }
 	    },
-
 	    /**
 	     * If rendered is called it means we have a paginator
 	     *
@@ -742,31 +806,66 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    render: function() {
 
-	        var currentPage = this.state.page;
+	        var ps = this.props.pagerState;
+	        var visiblePager = 3;
+	        var startPage = ps.page;
+	        var lastFFClass = "";
+	        var startFFClass = "";
+	        
+	        //FIXME please!
+	        var generatePager = function() {
+	            
+	            var pagerComponents = [];
 
-	        var pages = [];
-	        var maxPages = parseInt(this.props.datasource.records.length / this.props.config.pager.rowsPerPage);
-	        if ( ( this.props.datasource.records.length % this.props.config.pager.rowsPerPage ) != 0 ) {
-	            maxPages += 1;
-	        }
-	        for ( var i=1; i <= maxPages; i++ ) {
-	            pages.push(i);
-	        }
-
+	            pagerComponents.push(
+	                /*jshint ignore:start */
+	                (React.createElement("li", {className: startFFClass}, 
+	                    React.createElement("span", null, 
+	                        React.createElement("span", null, "«")
+	                    )
+	                ))
+	                /*jshint ignore:end */
+	            );
+	            
+	            for ( var i=startPage; i < (startPage+visiblePager); i++ ) {
+	                var cls = "";
+	                if ( i === ps.page ) {
+	                    cls="active";
+	                }
+	                pagerComponents.push(
+	                    /*jshint ignore:start */
+	                    (React.createElement("li", {className: cls}, React.createElement("a", {"data-page": i}, i)))
+	                    /*jshint ignore:end */
+	                );
+	            }
+	            
+	            pagerComponents.push(
+	                /*jshint ignore:start */
+	                (React.createElement("li", {className: lastFFClass}, 
+	                    React.createElement("span", null, 
+	                        React.createElement("span", null, "»")
+	                    )
+	                ))
+	                /*jshint ignore:end */
+	            );
+	            return pagerComponents;
+	            
+	        };
+	        
+	        
+	        
+	        /*jshint ignore:start */
 	        return(
-	            React.createElement("div", {className: "rdt-paginator"}, 
-	                React.createElement("div", null, 
-	                React.createElement("select", {value: currentPage, ref: "pageSelection", onChange: this.pageSelectionHandler}, 
-	                
-	                    pages.map(function (pageNum) {
-	                        return React.createElement("option", {key: pageNum, value: pageNum}, pageNum)
-	                    })
-	                
-	                )
+	            React.createElement("div", {onClick: this.pagerClickListener, className: "rdt-paginator"}, 
+	                React.createElement("ul", {className: "pagination pagination-sm rdt-paginator-pager"}, 
+	                    
+	                        generatePager()
+	                    
 	                )
 	            )
 	        )
-
+	  
+	        /*jshint ignore:end */
 	    }
 	});
 
@@ -794,10 +893,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            function(newValue,property,config) {
 	                var thesetter = config.setter;
 	                if ( typeof(config.setter) === 'string' ) {
-	                    record[config.setter](newValue, property, config);
+	                    record[config.setter](newValue, property, config,record);
 	                } else {
 	                    //assume function
-	                    thesetter.call(record,newValue, property, config);
+	                    thesetter.call(record,newValue, property, config,record);
 	                }
 
 	            }:
@@ -815,7 +914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                },record);
 	            } ;
-	        setter.call(record,newValue,property,config);
+	        setter.call(record,newValue,property,config,record);
 	        
 	    },
 	    
@@ -837,7 +936,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        /**
 	         * By default, we will use record[property] if path is not given.
-	         * If path is provided and is a string then will uspltle record[path]
+	         * If path is provided and is a string then will assume record[path]
 	         * If path is provided and is a function then we will call the function.
 	         * else we dont do anything
 	         */
@@ -904,6 +1003,270 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */
+	/*globals require,module */
+	/* jshint -W097, esnext: true */
+	"use strict";
+	    
+	var React = __webpack_require__(1);
+
+	var utils = __webpack_require__(10);
+
+	/**
+	 * React Component for Cell.
+	 *
+	 * TODO: We should be on edit mode on 2 clicks. 1st should have the td focused
+	 *
+	 *
+	 *
+	 */
+	var RDTCell = React.createClass({displayName: "RDTCell",
+	    componentWillReceiveProps : function(newProps) {
+	        this.setState({ editMode : false });
+	    },
+
+	    /**
+	     * problem is if this is null
+	     *
+	     * @param currentValue
+	     * @param newValue
+	     * @returns {*}
+	     */
+	    convertToType : function(currentValue,newValue) {
+	        if ( (typeof currentValue) === "number" ) {
+	            if ( currentValue % 1 === 0 ) {
+	                return parseInt(newValue);
+	            } else {
+	                return parseFloat(newValue);
+	            }
+	        } else {
+	            //assume it is a number for now
+	            //FIXME do for other types, move to a function
+	            return newValue;
+	        }
+	    },
+
+	    getDisplayStyle : function() {
+
+	        var element = this.refs.td.getDOMNode();
+	        var width = element.offsetWidth;
+	        var height = element.offsetHeight;
+	        var left = element.offsetLeft;
+	        var top = element.offsetTop;
+
+	        return {
+	            width: width,
+	            height: height,
+	            top: top,
+	            left: left
+	        };
+
+	    },
+
+	    componentDidMount: function () {
+	        if ( this.refs.input ) {
+	            this.refs.input.getDOMNode().focus();
+	        }
+	    },
+
+	    componentDidUpdate: function () {
+	        if ( this.refs.input ) {
+	            this.refs.input.getDOMNode().focus();
+	        }
+	    },
+
+	    onClickHandler : function(event) {
+
+	        var target = event.target;
+
+	        if ( !this.state.editMode && this.props.col.editable ) {
+	            this.setState( {  editMode : true  } );
+	        }
+
+	    },
+
+	    onKeyUp : function(event) {
+
+	        var type = event.type;
+	        var keyCode = event.which;
+	        var ENTER_KEY = 13;
+	        if ( type==='keyup' && keyCode === ENTER_KEY && this.refs.input ) {
+
+	            /**
+	             * FIXME: if we can't determine the type we should get it from the config as an option
+	             *
+	             */
+	            var newValue = this.convertToType(this.props.record[this.props.property],this.refs.input.getDOMNode().value);
+	            var datasource = this.props.datasource;
+	            var index = this.props.index;
+
+	            datasource.updateRecord(this.props.index,this.props.property,newValue,this.props.col);
+
+	            this.setState( { editMode : false } );
+	            if ( this.props.onCellChange ) {
+	                this.props.onCellChange();
+	            }
+
+
+	        }
+
+	    },
+
+
+	    onBlur : function() {
+	        this.setState({ editMode : false });
+	    },
+
+	    getInitialState: function() {
+	        return { record: this.props.record, editMode : false };
+	    },
+
+
+	    /**
+	     *
+	     *
+	     * @returns {XML}
+	     */
+	    createEditor : function() {
+	        var //record,property = null,
+	            editable = this.props.col.editable || false,
+	            editMode = this.state.editMode;
+
+	        //we need to check here because at initial pass getDisplayStyle will not resolve to anything.
+	        //it has the be rendered first
+	        if ( !editable || !editMode  ) {
+	            return null;
+	        }
+
+	        //TODO: either use built in editors or use the one returned by editor attribute
+	        //editor can be a react component
+	        //
+
+	        return ( React.createElement("input", {onBlur: this.onBlur, className: "rdt-editor", 
+	            style: this.getDisplayStyle(), onKeyUp: this.onKeyUp, onChange: this.onInputChange, ref: "input", defaultValue: this.getValue()}) );
+	    },
+	    
+	    getValue : function() {
+	        var property = this.props.property;
+	        return utils.extractValue(property,this.props.datasource.propertyConfigMap[property].path,this.props.record);
+	    },
+
+	    /**
+	     * If there is a specified renderer, then use that to render the cell
+	     *
+	     */
+	        //value, formattedValue, cellDecoration, property, record
+	    renderElement : function(value, formattedValue, cellDecoration, property, record) {
+	        var renderer = this.props.col.renderer;
+	        
+	        if ( typeof renderer === 'function' ) {
+	            try {
+	                return renderer.call(renderer,value,formattedValue,cellDecoration,property,record,React);
+	            } catch ( e ) {
+	                console.log(e);
+	                return null;
+	            } 
+	        }
+	    },
+
+	    /**
+	     * By default if the decorator is a string or returns  a string, 
+	     * then it uses it as className. If object is returned then the following is expected
+	     * 
+	     * {
+	     *    className : "cls1 cls2", //the class applied to the container td
+	     *    style : { color : "red" }, //the style applied to the container td
+	     *    cellClassName: "cls1 cls2" //the classname applied to the cell div
+	     *    cellStyle : { color : "red" }, //the style applied to the cell div
+	     * 
+	     * } 
+	     * 
+	     *  
+	     * @param value
+	     * @param property
+	     * @param record
+	     * @returns {{className: string, style: {}}}
+	     */
+	    tdCellDecoration : function(value,property,record) {
+	        
+	        var decorator =  this.props.col.decorator;
+	        var decoration = null;
+	        var className = "";
+	        var style = {};
+	        var cellClassName = "";
+	        var cellStyle = {};
+	        
+	        if ( typeof decorator === 'function' ) {
+	            try {
+	                decoration = decorator.call(decorator,value,property,record);
+
+	                if ( typeof decoration === 'string' ) {
+	                    className = decoration;
+	                } else  {
+	                    className = decoration.className || "";
+	                    style = decoration.style || {};
+	                    cellClassName = decoration.cellClassName || "";
+	                    cellStyle = decoration.cellStyle || {};
+	                }
+	            } catch ( e ) {
+	                console.log(e);
+	            }
+	        } else if ( typeof decorator === 'string' ) {
+	            className = decorator;
+	        }
+	        return {
+	            className : className,
+	            style : style,
+	            cellClassName : cellClassName,
+	            cellStyle : cellStyle
+	        }
+	    }
+	        
+	    ,
+	    
+	    render: function() {
+
+
+	        var record = this.props.record;
+	        var property = this.props.property;
+
+	        var value = this.getValue();
+	        var formattedValue = null;
+	         //FIXME ensure its a function
+	        if ( this.props.col.formatter ) {
+	            //pass the underlying record
+	            formattedValue = this.props.col.formatter(value,property,record,React);
+	        } else {
+	            formattedValue = value;
+	        }
+	        var decoration = this.tdCellDecoration(value,property,record);
+	        
+	        var renderedValue = null; 
+	        
+	        if ( this.props.col.renderer ) {
+	            renderedValue = this.renderElement( value, formattedValue, decoration, property, record );
+	        } 
+	        if ( !renderedValue ) {
+	            renderedValue = React.createElement("div", null, formattedValue)
+	        }
+	        
+	        return (
+	            React.createElement("td", {className: decoration.className, style: decoration.style, ref: "td", onClick: this.onClickHandler, "data-property": property, key: property}, 
+	                React.createElement("div", {className: decoration.cellClassName, style: decoration.cellStyle}, renderedValue), 
+	                this.createEditor()
+	            )
+	        )
+	    }
+	});
+
+
+	module.exports = RDTCell;
+
+
+/***/ },
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -1207,186 +1570,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	function isUndefined(arg) {
 	  return arg === void 0;
 	}
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */
-	/*globals require,module */
-	/* jshint -W097, esnext: true */
-	"use strict";
-	    
-	var React = __webpack_require__(1);
-
-	var utils = __webpack_require__(10);
-
-	/**
-	 * React Component for Cell.
-	 *
-	 * TODO: We should be on edit mode on 2 clicks. 1st should have the td focused
-	 *
-	 *
-	 *
-	 */
-	var RDTCell = React.createClass({displayName: "RDTCell",
-	    componentWillReceiveProps : function(newProps) {
-	        this.setState({ editMode : false });
-	    },
-
-	    /**
-	     * problem is if this is null
-	     *
-	     * @param currentValue
-	     * @param newValue
-	     * @returns {*}
-	     */
-	    convertToType : function(currentValue,newValue) {
-	        if ( (typeof currentValue) === "number" ) {
-	            if ( currentValue % 1 === 0 ) {
-	                return parseInt(newValue);
-	            } else {
-	                return parseFloat(newValue);
-	            }
-	        } else {
-	            //assume it is a number for now
-	            //FIXME do for other types, move to a function
-	            return newValue;
-	        }
-	    },
-
-	    getDisplayStyle : function() {
-
-	        var element = this.refs.td.getDOMNode();
-	        var width = element.offsetWidth;
-	        var height = element.offsetHeight;
-	        var left = element.offsetLeft;
-	        var top = element.offsetTop;
-
-	        return {
-	            width: width,
-	            height: height,
-	            top: top,
-	            left: left
-	        };
-
-	    },
-
-	    componentDidMount: function () {
-	        if ( this.refs.input ) {
-	            this.refs.input.getDOMNode().focus();
-	        }
-	    },
-
-	    componentDidUpdate: function () {
-	        if ( this.refs.input ) {
-	            this.refs.input.getDOMNode().focus();
-	        }
-	    },
-
-	    onClickHandler : function(event) {
-
-	        var target = event.target;
-
-	        if ( !this.state.editMode && this.props.col.editable ) {
-	            this.setState( {  editMode : true  } );
-	        }
-
-	    },
-
-	    onKeyUp : function(event) {
-
-	        var type = event.type;
-	        var keyCode = event.which;
-	        var ENTER_KEY = 13;
-	        if ( type==='keyup' && keyCode === ENTER_KEY && this.refs.input ) {
-
-	            /**
-	             * FIXME: if we can't determine the type we should get it from the config as an option
-	             *
-	             */
-	            var newValue = this.convertToType(this.props.record[this.props.property],this.refs.input.getDOMNode().value);
-	            var datasource = this.props.datasource;
-	            var index = this.props.index;
-
-	            datasource.updateRecord(this.props.index,this.props.property,newValue,this.props.col);
-
-	            this.setState( {  editMode : false } );
-	            if ( this.props.onCellChange ) {
-	                this.props.onCellChange();
-	            }
-
-
-	        }
-
-	    },
-
-
-	    onBlur : function() {
-	        this.setState({ editMode : false });
-	    },
-
-	    getInitialState: function() {
-	        return { editMode : false };
-	    },
-
-
-
-	    /**
-	     *
-	     *
-	     * @returns {XML}
-	     */
-	    createEditor : function() {
-	        var //record,property = null,
-	            editable = this.props.col.editable || false,
-	            editMode = this.state.editMode;
-
-	        //we need to check here because at initial pass getDisplayStyle will not resolve to anything.
-	        //it has the be rendered first
-	        if ( !editable || !editMode  ) {
-	            return null;
-	        }
-
-	        //TODO: either use built in editors or use the one returned by editor attribute
-	        //editor can be a react component
-	        //
-
-	        return ( React.createElement("input", {onBlur: this.onBlur, className: "rdt-editor", 
-	            style: this.getDisplayStyle(), onKeyUp: this.onKeyUp, onChange: this.onInputChange, ref: "input", defaultValue: this.getValue()}) );
-	    },
-	    
-	    getValue : function() {
-	        var property = this.props.property;
-	        return utils.extractValue(property,this.props.datasource.propertyConfigMap[property].path,this.props.record);
-	    },
-
-	    render: function() {
-
-
-	        var record = this.props.record;
-	        var property = this.props.property;
-
-	        var value = this.getValue();
-
-	         //FIXME ensure its a function
-	        if ( this.props.col.formatter ) {
-	            //pass the underlying record
-	            value = this.props.col.formatter(value,property,record,React);
-	        }
-
-	        return (
-	            React.createElement("td", {ref: "td", onClick: this.onClickHandler, "data-property": property, key: property}, 
-	                React.createElement("div", null, value), 
-	                this.createEditor()
-	            )
-	        )
-	    }
-	});
-
-
-	module.exports = RDTCell;
 
 
 /***/ }
