@@ -1,0 +1,39 @@
+html,body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif; font-size: 12px;
+    height:100%;
+
+}
+.container {
+    display:flex;
+    flex-direction: column;
+    height:100%;
+}
+
+.left {
+    color: #FFF;
+    width: 200px;
+    background: #485b6e;
+    height:100%;
+}
+
+.title {
+    background: #e74c3c;
+    height: 30px;
+    width: 200px;
+    padding: 10px 0;
+}
+
+.title-text {
+
+    font-weight: 300;
+    font-size: 18px;
+
+}
+
+.nav {
+    display:flex;
+    height: 100%;
+
+}

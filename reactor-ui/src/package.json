@@ -1,0 +1,23 @@
+{
+  "name": "src",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js index.js ../js/bundle.js --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-core": "^5.0.12",
+    "babel-loader": "^5.0.0",
+    "classnames": "^1.2.0",
+    "react": "^0.13.1",
+    "reactor-ui": "0.0.3",
+    "webpack": "^1.8.4"
+  },
+  "dependencies": {
+    "reactor-ui": "0.0.4"
+  }
+}
