@@ -5,21 +5,23 @@ html,body {
     height:100%;
 
 }
-.container {
+.rui-doc-container {
     display:flex;
-    flex-direction: column;
+
     height:100%;
 }
 
 .left {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 200px;
     color: #FFF;
-    width: 200px;
-    background: #485b6e;
+    background: #252a3a;
     height:100%;
 }
 
 .title {
-    background: #e74c3c;
+    background: #1b98f8;
     height: 30px;
     width: 200px;
     padding: 10px 0;
@@ -36,4 +38,14 @@ html,body {
     display:flex;
     height: 100%;
 
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.playground {
+    display:flex;
 }
