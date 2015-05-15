@@ -14,7 +14,7 @@ html,body {
 .left {
     display: flex;
     flex-direction: column;
-    flex: 0 0 200px;
+    flex: 0 0 220px;
     color: #FFF;
     background: #252a3a;
     height:100%;
@@ -22,16 +22,28 @@ html,body {
 
 .title {
     background: #1b98f8;
-    height: 30px;
-    width: 200px;
-    padding: 10px 0;
+    height: 50px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items:center;
+    border-bottom: 1px solid #1b98f8;
+
 }
 
 .title-text {
 
     font-weight: 300;
     font-size: 18px;
-
+}
+.rui-doc-main {
+    flex: 1 1 auto;
+}
+.rui-doc-header {
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid #EEE;
 }
 
 .nav {
@@ -48,4 +60,8 @@ html,body {
 
 .playground {
     display:flex;
+}
+
+.rui-snav-active  {
+    border-left: 4px solid #1b98f8;
 }
