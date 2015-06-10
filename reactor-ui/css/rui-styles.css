@@ -57,6 +57,54 @@ body {
   padding: 2px 8px;
 }
 /** End Pills */
+
+
+.rui-panel-c {
+  background: #FFF;
+}
+
+.rui-panel-close {
+
+}
+
+.rui-panel-collapsable {
+
+}
+
+.rui-panel-control {
+  color: #AAA;
+  cursor: pointer;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.rui-panel-control:hover {
+  color: #555;
+}
+
+.rui-panel-header {
+  display: flex;
+  padding: 10px;
+  border: 1px solid #d7d7d7;
+}
+
+.rui-panel-title {
+  font-weight: bold;
+  color: #066fc1;
+}
+
+.rui-panel-controls {
+  margin-left: auto;
+}
+
+.rui-panel-body {
+  padding: 10px;
+  border: 1px solid #d7d7d7;
+  border-top: none;
+  overflow: auto;
+}
+
+
 /** Buttons */
 .rui-btn {
   color: inherit;
@@ -241,7 +289,8 @@ body {
   font-size: 120%;
   display: inline-block;
 }
-.rui-form-cont > input {
+.rui-form-cont > input,
+.rui-form-cont > select {
   display: block;
   width: 100%;
 }
@@ -314,6 +363,7 @@ body {
   }
 }
 .container-fluid {
+  width: 100%;
   margin-right: auto;
   margin-left: auto;
   padding-left: 15px;

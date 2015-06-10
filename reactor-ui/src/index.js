@@ -1,8 +1,12 @@
+/* jshint -W097, esnext:true, unused: vars */
 
-var { SideNav, NavGroup, Nav } = require("reactor-ui/sidenav");
-var React = require("react");
-var Router = require('react-router');
-var { Route, DefaultRoute, RouteHandler, Link } = Router;
+import RSideNav from 'reactor-ui/sidenav';
+
+import React from 'react';
+import Router from 'react-router';
+
+const { SideNav } = RSideNav;
+const { Route, DefaultRoute, RouteHandler, Link } = Router;
 
 
 var navi = [
@@ -10,7 +14,7 @@ var navi = [
     { id: 'buttons', icon: "fa fa-sliders", text: "Button/Controls/Toggles"},
     { id: 'grid', icon: "fa fa-server", text: "Grid System"},
     { id: 'tabs', icon: 'fa fa-tablet' ,text: "Tabs"},
-    { id: 'panels', icon: 'fa fa-circle-thin' ,text: "Panels"},
+    { id: 'panels', icon: 'fa fa-columns' ,text: "Panels"},
     { id: 'sidenav', icon: 'fa fa-circle-thin' ,text: "Side Navigation"},
     { id: 'tables', icon: 'fa fa-table' ,text: "Table"},
     { id: 'github', icon: 'fa fa-github' ,text: "GitHub Page"}
@@ -34,6 +38,7 @@ var App = React.createClass({
 var routes = (
     <Route handler={App}>
         <Route name="buttons" path="buttons" handler={require("./Buttons")} />
+        <Route name="panels" path="panels" handler={require("./Panels")} />
     </Route>
 );
 
